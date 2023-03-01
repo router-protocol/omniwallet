@@ -25,7 +25,9 @@ fn get_mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Route
 }
 
 fn do_instantiate(mut deps: DepsMut<RouterQuery>) {
-    let instantiate_msg = InstantiateMsg {};
+    let instantiate_msg = InstantiateMsg {
+        deployer: INIT_ADDRESS.to_string(),
+    };
     let info = mock_info(INIT_ADDRESS, &[]);
     let env = mock_env();
     let res = instantiate(deps.branch(), env, info, instantiate_msg).unwrap();
@@ -56,7 +58,7 @@ fn test_execute_update_bridge_address() {
         chain_id: String::from("43113"),
         chain_type: 0,
         transfers: vec![TransferInfo {
-            token_address: String::from(""),
+            token_address: String::from("0x1212121212121212121212121212121212121212"),
             recipient: String::from("0xFEE2d12E90b721df5C135F25E2B4Ae9E483CcE3D"),
             amount: Uint128::from(123u128),
             is_native: true,

@@ -13,11 +13,11 @@ use router_wasm_bindings::{
 };
 
 use crate::{
-    modifers::is_owner_modifier,
+    modifers::{is_deployer_modifier, is_owner_modifier},
     msg::{CustodyContractInfo, ExecuteMsg, TransferInfo},
     state::{
-        CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEFAULT_EXPIRY_CONFIG, GAS_FACTOR,
-        GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
+        CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEFAULT_EXPIRY_CONFIG, DEPLOYER,
+        GAS_FACTOR, GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
     },
     utils::fetch_oracle_gas_price,
 };
@@ -43,6 +43,7 @@ pub fn forwarder_execute(
         ExecuteMsg::SetGasLimit { limit } => set_gas_limit(deps, &env, &info, limit),
         ExecuteMsg::SetGasFactor { gas_factor } => set_gas_factor(deps, &env, &info, gas_factor),
         ExecuteMsg::SetOwner { new_owner } => set_owner(deps, &env, &info, new_owner),
+        ExecuteMsg::SetDeployer { deployer } => set_deployer(deps, &env, &info, deployer),
     }
 }
 
@@ -143,7 +144,7 @@ pub fn set_custody_contracts(
     info: &MessageInfo,
     custody_contracts: Vec<CustodyContractInfo>,
 ) -> StdResult<Response<RouterMsg>> {
-    is_owner_modifier(deps.as_ref(), info)?;
+    is_deployer_modifier(deps.as_ref(), info)?;
 
     for i in 0..custody_contracts.len() {
         // let address: String = custody_contracts[i].address.replace("0x", "").to_lowercase();
@@ -224,5 +225,24 @@ pub fn set_owner(
     OWNER.save(deps.storage, &deps.api.addr_validate(&new_owner)?)?;
 
     let res = Response::new().add_attribute("action", "SetOwner");
+    Ok(res)
+}
+
+/**
+ * @notice Used to set new deployer
+ * @notice Only callable by Admin.
+ * @param  new_owner
+*/
+pub fn set_deployer(
+    deps: DepsMut<RouterQuery>,
+    _env: &Env,
+    info: &MessageInfo,
+    deployer: String,
+) -> StdResult<Response<RouterMsg>> {
+    is_owner_modifier(deps.as_ref(), &info)?;
+
+    DEPLOYER.save(deps.storage, &deps.api.addr_validate(&deployer)?)?;
+
+    let res = Response::new().add_attribute("action", "SetDeployer");
     Ok(res)
 }

@@ -18,7 +18,9 @@ pub struct CustodyContractInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub deployer: String,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -41,6 +43,9 @@ pub enum ExecuteMsg {
     },
     SetOwner {
         new_owner: String,
+    },
+    SetDeployer {
+        deployer: String,
     },
 }
 
@@ -76,4 +81,5 @@ pub enum QueryMsg {
     },
     FetchGasLimit {},
     FetchGasFactor {},
+    FetchDeployer {},
 }

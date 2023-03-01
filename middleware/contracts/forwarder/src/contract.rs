@@ -1,6 +1,6 @@
 use crate::{
     msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg},
-    state::{DEFAULT_GAS_LIMIT, GAS_FACTOR, GAS_LIMIT},
+    state::{DEFAULT_GAS_LIMIT, DEPLOYER, GAS_FACTOR, GAS_LIMIT},
 };
 use router_wasm_bindings::{RouterMsg, RouterQuery, SudoMsg};
 
@@ -17,18 +17,19 @@ use crate::{
 
 // version info for migration info
 const CONTRACT_NAME: &str = "voyager-routing-contract";
-const CONTRACT_VERSION: &str = "0.1.03";
+const CONTRACT_VERSION: &str = "0.1.05";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut<RouterQuery>,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {
     deps.api.debug("Instantiating the contract🚀");
 
     OWNER.save(deps.storage, &info.sender)?;
+    DEPLOYER.save(deps.storage, &deps.api.addr_validate(&msg.deployer)?)?;
     GAS_FACTOR.save(deps.storage, &110)?;
     GAS_LIMIT.save(deps.storage, &DEFAULT_GAS_LIMIT)?;
 

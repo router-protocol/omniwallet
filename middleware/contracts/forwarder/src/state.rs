@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use router_wasm_bindings::types::OutboundBatchRequest;
 
@@ -7,11 +7,10 @@ pub const CREATE_OUTBOUND_REPLY_ID: u64 = 1;
 pub const DEFAULT_EXPIRY_CONFIG: u64 = 5 * 60 * 60; // 5 hours
 pub const DEFAULT_GAS_LIMIT: u64 = 300_000;
 
-// static fee for token transfer when fee config is not available
-pub const STATIC_FEE: Item<Uint128> = Item::new("static_fee");
-
 // ADMIN address to perform admin priviledged operations
 pub const OWNER: Item<Addr> = Item::new("forwarder_contract_owner");
+
+pub const DEPLOYER: Item<Addr> = Item::new("deployer_address");
 
 // Custody Smart Contract Addresses Mapping
 // (ChainId, ChainType) => CustodySmartContractAddress

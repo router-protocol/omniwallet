@@ -1,6 +1,6 @@
 use crate::{
     msg::QueryMsg,
-    state::{CUSTODY_CONTRACT_MAPPING, GAS_LIMIT},
+    state::{CUSTODY_CONTRACT_MAPPING, DEPLOYER, GAS_LIMIT},
     utils::fetch_oracle_gas_price,
 };
 use cosmwasm_std::{to_binary, Addr, Binary, Deps, Env, Order, StdResult};
@@ -49,6 +49,7 @@ pub fn forwarder_query(deps: Deps<RouterQuery>, _env: Env, msg: QueryMsg) -> Std
             chain_type,
         } => to_binary(&fetch_oracle_gas_price(deps, chain_id, chain_type)?),
         QueryMsg::FetchGasLimit {} => to_binary(&fetch_gas_limit(deps)?),
+        QueryMsg::FetchDeployer {} => to_binary(&fetch_gas_limit(deps)?),
     }
 }
 
@@ -133,4 +134,11 @@ pub fn fetch_gas_factor(deps: Deps<RouterQuery>) -> StdResult<u64> {
 */
 pub fn fetch_gas_limit(deps: Deps<RouterQuery>) -> StdResult<u64> {
     GAS_LIMIT.load(deps.storage)
+}
+
+/**
+ * @notice Used to fetch gas factor value
+*/
+pub fn fetch_deployer(deps: Deps<RouterQuery>) -> StdResult<String> {
+    Ok(DEPLOYER.load(deps.storage).unwrap().to_string())
 }
