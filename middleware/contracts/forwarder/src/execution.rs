@@ -83,7 +83,7 @@ pub fn init_transfers(
 
         let u256: U256 = U256::from(transfers[i].amount.u128());
         let amount_token: Token = Token::Uint(u256);
-        let is_native_token: Token = Token::Bool(is_atomic.unwrap_or(false));
+        let is_native_token: Token = Token::Bool(transfers[i].is_native);
         let contract_call_payload: Bytes = encode(&[
             recipient_address_token,
             token_address_token,
@@ -110,7 +110,7 @@ pub fn init_transfers(
             gas_limit: GAS_LIMIT.load(deps.storage)?,
             gas_price: fetch_oracle_gas_price(deps.as_ref(), chain_id.clone(), chain_type)?,
         },
-        is_atomic: false,
+        is_atomic: is_atomic.unwrap_or(true),
         exp_timestamp: env.block.time.seconds() + expiry_timeout,
     };
     let outbound_batch_requests: Vec<OutboundBatchRequest> = vec![outbound_batch_req];

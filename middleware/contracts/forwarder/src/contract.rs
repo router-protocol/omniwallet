@@ -17,7 +17,7 @@ use crate::{
 
 // version info for migration info
 const CONTRACT_NAME: &str = "voyager-routing-contract";
-const CONTRACT_VERSION: &str = "0.1.01";
+const CONTRACT_VERSION: &str = "0.1.02";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
