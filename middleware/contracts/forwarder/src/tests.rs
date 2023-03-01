@@ -25,7 +25,7 @@ fn get_mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Route
 }
 
 fn do_instantiate(mut deps: DepsMut<RouterQuery>) {
-    let instantiate_msg = InstantiateMsg { owner: None };
+    let instantiate_msg = InstantiateMsg {};
     let info = mock_info(INIT_ADDRESS, &[]);
     let env = mock_env();
     let res = instantiate(deps.branch(), env, info, instantiate_msg).unwrap();

@@ -6,7 +6,7 @@ use router_wasm_bindings::{RouterMsg, RouterQuery, SudoMsg};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
-use cosmwasm_std::{Addr, Reply, StdError};
+use cosmwasm_std::{Reply, StdError};
 use cw2::set_contract_version;
 
 use crate::{
@@ -17,23 +17,18 @@ use crate::{
 
 // version info for migration info
 const CONTRACT_NAME: &str = "voyager-routing-contract";
-const CONTRACT_VERSION: &str = "0.1.02";
+const CONTRACT_VERSION: &str = "0.1.03";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut<RouterQuery>,
     _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     deps.api.debug("Instantiating the contract🚀");
 
-    let owner: Addr = match msg.owner {
-        Some(owner_addr) => deps.api.addr_validate(&owner_addr)?,
-        None => info.sender,
-    };
-
-    OWNER.save(deps.storage, &owner)?;
+    OWNER.save(deps.storage, &info.sender)?;
     GAS_FACTOR.save(deps.storage, &110)?;
     GAS_LIMIT.save(deps.storage, &DEFAULT_GAS_LIMIT)?;
 

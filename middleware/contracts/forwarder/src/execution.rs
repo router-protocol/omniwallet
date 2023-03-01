@@ -17,7 +17,7 @@ use crate::{
     msg::{CustodyContractInfo, ExecuteMsg, TransferInfo},
     state::{
         CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEFAULT_EXPIRY_CONFIG, GAS_FACTOR,
-        GAS_LIMIT, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
+        GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
     },
     utils::fetch_oracle_gas_price,
 };
@@ -42,6 +42,7 @@ pub fn forwarder_execute(
         }
         ExecuteMsg::SetGasLimit { limit } => set_gas_limit(deps, &env, &info, limit),
         ExecuteMsg::SetGasFactor { gas_factor } => set_gas_factor(deps, &env, &info, gas_factor),
+        ExecuteMsg::SetOwner { new_owner } => set_owner(deps, &env, &info, new_owner),
     }
 }
 
@@ -204,5 +205,24 @@ pub fn set_gas_limit(
     GAS_LIMIT.save(deps.storage, &gas_limit)?;
 
     let res = Response::new().add_attribute("action", "SetGasLimit");
+    Ok(res)
+}
+
+/**
+ * @notice Used to set new owner
+ * @notice Only callable by Admin.
+ * @param  new_owner
+*/
+pub fn set_owner(
+    deps: DepsMut<RouterQuery>,
+    _env: &Env,
+    info: &MessageInfo,
+    new_owner: String,
+) -> StdResult<Response<RouterMsg>> {
+    is_owner_modifier(deps.as_ref(), &info)?;
+
+    OWNER.save(deps.storage, &deps.api.addr_validate(&new_owner)?)?;
+
+    let res = Response::new().add_attribute("action", "SetOwner");
     Ok(res)
 }
