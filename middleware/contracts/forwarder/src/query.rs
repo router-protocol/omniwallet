@@ -1,10 +1,10 @@
 use crate::{
-    msg::QueryMsg,
     state::{CUSTODY_CONTRACT_MAPPING, DEPLOYER, GAS_LIMIT},
     utils::fetch_oracle_gas_price,
 };
 use cosmwasm_std::{to_binary, Addr, Binary, Deps, Env, Order, StdResult};
 use cw2::get_contract_version;
+use omni_wallet::forwarder::QueryMsg;
 use router_wasm_bindings::{types::OutboundBatchRequest, RouterQuery};
 
 use crate::state::{
@@ -49,7 +49,7 @@ pub fn forwarder_query(deps: Deps<RouterQuery>, _env: Env, msg: QueryMsg) -> Std
             chain_type,
         } => to_binary(&fetch_oracle_gas_price(deps, chain_id, chain_type)?),
         QueryMsg::FetchGasLimit {} => to_binary(&fetch_gas_limit(deps)?),
-        QueryMsg::FetchDeployer {} => to_binary(&fetch_gas_limit(deps)?),
+        QueryMsg::FetchDeployer {} => to_binary(&fetch_deployer(deps)?),
     }
 }
 

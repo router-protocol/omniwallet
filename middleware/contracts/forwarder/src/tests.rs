@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 
 use crate::contract::execute;
 use crate::contract::instantiate;
-use crate::msg::{CustodyContractInfo, ExecuteMsg, InstantiateMsg, TransferInfo};
 use crate::state::DEFAULT_EXPIRY_CONFIG;
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{
@@ -10,6 +9,7 @@ use cosmwasm_std::{
     DepsMut,
 };
 use cosmwasm_std::{CosmosMsg, OwnedDeps, Uint128};
+use omni_wallet::forwarder::{CustodyContractInfo, ExecuteMsg, InstantiateMsg, TransferInfo};
 use router_wasm_bindings::types::OutboundBatchRequest;
 use router_wasm_bindings::{RouterMsg, RouterQuery};
 

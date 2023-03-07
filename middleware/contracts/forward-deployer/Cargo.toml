@@ -1,5 +1,5 @@
 [package]
-name = "forwarder"
+name = "forwarder-deployer"
 version = "0.1.0"
 edition = "2021"
 authors = ["Gaurav Agarwal <gaurav@routerprotocol.com>"]

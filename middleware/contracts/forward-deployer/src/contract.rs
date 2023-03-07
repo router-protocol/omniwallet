@@ -1,21 +1,20 @@
-use crate::state::{DEFAULT_GAS_LIMIT, DEPLOYER, GAS_FACTOR, GAS_LIMIT};
-use omni_wallet::forwarder::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use router_wasm_bindings::{RouterMsg, RouterQuery, SudoMsg};
+use crate::{
+    reply::handle_reply,
+    state::{DEPLOYER, FORWARDER_CODE_ID},
+};
+use omni_wallet::forwarder_contract::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cosmwasm_std::{Reply, StdError};
 use cw2::set_contract_version;
 
-use crate::{
-    execution::forwarder_execute, handle_acknowledgement::handle_out_bound_ack_request,
-    handle_inbound::handle_in_bound_request, handle_reply::handle_reply, query::forwarder_query,
-    state::OWNER,
-};
+use crate::{execution::handle_execute, query::handle_query, state::OWNER};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "forwarder-contract";
-const CONTRACT_VERSION: &str = "0.1.05";
+const CONTRACT_NAME: &str = "forwarder-deployer-contract";
+const CONTRACT_VERSION: &str = "0.1.07";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -27,56 +26,10 @@ pub fn instantiate(
     deps.api.debug("Instantiating the contract🚀");
 
     OWNER.save(deps.storage, &info.sender)?;
-    DEPLOYER.save(deps.storage, &deps.api.addr_validate(&msg.deployer)?)?;
-    GAS_FACTOR.save(deps.storage, &110)?;
-    GAS_LIMIT.save(deps.storage, &DEFAULT_GAS_LIMIT)?;
-
+    FORWARDER_CODE_ID.save(deps.storage, &msg.code_id)?;
+    DEPLOYER.save(deps.storage, &msg.deployer)?;
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new().add_attribute("action", "forwarder-contract-init"))
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut<RouterQuery>, env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
-    match msg {
-        SudoMsg::HandleInboundReq {
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
-            payload,
-        } => handle_in_bound_request(
-            deps,
-            env,
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
-            payload,
-        ),
-        SudoMsg::HandleOutboundAck {
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
-            exec_data,
-            refund_amount,
-        } => handle_out_bound_ack_request(
-            deps,
-            env,
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
-            exec_data,
-            refund_amount,
-        ),
-    }
+    Ok(Response::new().add_attribute("action", "forwarder-deployer-contract-init"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -86,9 +39,10 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response<RouterMsg>> {
-    forwarder_execute(deps, env, info, msg)
+    handle_execute(deps, env, info, msg)
 }
 
+/// This just stores the result for future query
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut<RouterQuery>, env: Env, msg: Reply) -> StdResult<Response<RouterMsg>> {
     handle_reply(deps, env, msg)
@@ -119,5 +73,5 @@ pub fn migrate(deps: DepsMut<RouterQuery>, env: Env, _msg: MigrateMsg) -> StdRes
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps<RouterQuery>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    forwarder_query(deps, env, msg)
+    handle_query(deps, env, msg)
 }

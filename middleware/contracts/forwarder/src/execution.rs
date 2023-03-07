@@ -14,13 +14,13 @@ use router_wasm_bindings::{
 
 use crate::{
     modifers::{is_deployer_modifier, is_owner_modifier},
-    msg::{CustodyContractInfo, ExecuteMsg, TransferInfo},
     state::{
         CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEFAULT_EXPIRY_CONFIG, DEPLOYER,
         GAS_FACTOR, GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
     },
     utils::fetch_oracle_gas_price,
 };
+use omni_wallet::forwarder::{CustodyContractInfo, ExecuteMsg, TransferInfo};
 
 pub fn forwarder_execute(
     deps: DepsMut<RouterQuery>,

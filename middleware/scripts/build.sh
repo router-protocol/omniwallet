@@ -11,7 +11,7 @@ fi
 
 # building the wasm artifacts
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="${pwd}",target=/code/target \
+  --mount type=volume,source="omni_wallet_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/workspace-optimizer:0.12.10
 
