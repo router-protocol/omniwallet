@@ -3,16 +3,24 @@
 # exit when any command fails
 set -e
 
-if [ $# -ne 0 ] 
-then
-    echo "Invalid Arguments"
-    echo "sh build.sh"
-fi
-
+rustup target add wasm32-unknown-unknown
+cargo wasm
 # building the wasm artifacts
-docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="omni_wallet_cache",target=/code/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer:0.12.10
 
+machine_info=$(uname -a)
+apple_identifier="arm64"
+
+if echo "$machine_info" | grep -q "$apple_identifier"; then
+  echo "Apple-based chipset"
+  docker run --rm -v "$(pwd)":/code \
+    --mount type=volume,source="voyager_cache",target=/code/target \
+    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+    cosmwasm/workspace-optimizer-arm64:0.12.13
+else
+  echo "Intel-based chipset"
+  docker run --rm -v "$(pwd)":/code \
+    --mount type=volume,source="voyager_cache",target=/code/target \
+    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+    cosmwasm/workspace-optimizer:0.12.13
+fi
 echo "wasm build created"

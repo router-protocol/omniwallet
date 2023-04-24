@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    Coin, DepsMut, Env, MessageInfo, ReplyOn, Response, StdError, StdResult, SubMsg, Uint128,
+    DepsMut, Env, Event, MessageInfo, ReplyOn, Response, StdError, StdResult, SubMsg, Uint128,
 };
 use router_wasm_bindings::{
     ethabi::{
@@ -7,7 +7,7 @@ use router_wasm_bindings::{
         ethereum_types::{H160, U256},
         Token,
     },
-    types::{ContractCall, OutboundBatchRequest, OutgoingTxFee},
+    types::{AckType, RequestMetaData},
     utils::convert_address_from_string_to_bytes,
     Bytes, RouterMsg, RouterQuery,
 };
@@ -15,12 +15,12 @@ use router_wasm_bindings::{
 use crate::{
     modifers::{is_deployer_modifier, is_owner_modifier},
     state::{
-        CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEFAULT_EXPIRY_CONFIG, DEPLOYER,
+        CHAIN_TYPE_MAPPING, CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEPLOYER,
         GAS_FACTOR, GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
     },
     utils::fetch_oracle_gas_price,
 };
-use omni_wallet::forwarder::{CustodyContractInfo, ExecuteMsg, TransferInfo};
+use omni_wallet::forwarder::{ChainTypeInfo, CustodyContractInfo, ExecuteMsg, TransferInfo};
 
 pub fn forwarder_execute(
     deps: DepsMut<RouterQuery>,
@@ -31,12 +31,8 @@ pub fn forwarder_execute(
     match msg {
         ExecuteMsg::InitiateTransfer {
             chain_id,
-            chain_type,
             transfers,
-            is_atomic,
-        } => init_transfers(
-            deps, &env, &info, chain_id, chain_type, transfers, is_atomic,
-        ),
+        } => init_transfers(deps, &env, &info, chain_id, transfers),
         ExecuteMsg::SetCustodyContracts { custody_contracts } => {
             set_custody_contracts(deps, &env, &info, custody_contracts)
         }
@@ -44,6 +40,9 @@ pub fn forwarder_execute(
         ExecuteMsg::SetGasFactor { gas_factor } => set_gas_factor(deps, &env, &info, gas_factor),
         ExecuteMsg::SetOwner { new_owner } => set_owner(deps, &env, &info, new_owner),
         ExecuteMsg::SetDeployer { deployer } => set_deployer(deps, &env, &info, deployer),
+        ExecuteMsg::SetChainTypes { chain_type_info } => {
+            set_chain_types_info(deps, env, info, chain_type_info)
+        }
     }
 }
 
@@ -57,22 +56,20 @@ pub fn forwarder_execute(
 */
 pub fn init_transfers(
     deps: DepsMut<RouterQuery>,
-    env: &Env,
+    _env: &Env,
     info: &MessageInfo,
     chain_id: String,
-    chain_type: u32,
     transfers: Vec<TransferInfo>,
-    is_atomic: Option<bool>,
 ) -> StdResult<Response<RouterMsg>> {
     is_owner_modifier(deps.as_ref(), info)?;
 
-    let mut contract_calls: Vec<ContractCall> = vec![];
+    let mut i_requests: Vec<RouterMsg> = vec![];
+    let mut sub_messages: Vec<SubMsg<RouterMsg>> = vec![];
 
-    let custody_contract: String =
-        CUSTODY_CONTRACT_MAPPING.load(deps.storage, (chain_id.clone(), chain_type))?;
-    let byte_address: Bytes = convert_address_from_string_to_bytes(custody_contract, chain_type)?;
+    let custody_contract: String = CUSTODY_CONTRACT_MAPPING.load(deps.storage, &chain_id)?;
     for i in 0..transfers.len() {
         // paylaod {address(to_address), address(token), uint256(amount), bool(isNative)}
+        let chain_type: u64 = CHAIN_TYPE_MAPPING.load(deps.storage, &chain_id)?;
         let recipient_address: Bytes =
             convert_address_from_string_to_bytes(transfers[i].recipient.clone(), chain_type)?;
         let address_h160 = H160::from_slice(&recipient_address);
@@ -92,43 +89,47 @@ pub fn init_transfers(
             amount_token,
             is_native_token,
         ]);
-        let contract_call: ContractCall = ContractCall {
-            destination_contract_address: byte_address.clone(),
-            payload: contract_call_payload,
+
+        let request_packet: Bytes = encode(&[
+            Token::String(custody_contract.clone()),
+            Token::Bytes(contract_call_payload),
+        ]);
+        let gas_limit: u64 = GAS_LIMIT.load(deps.storage)?;
+        let gas_price: u64 =
+            fetch_oracle_gas_price(deps.as_ref(), chain_id.clone()).unwrap_or(100_000_000_000);
+        let request_metadata: RequestMetaData = RequestMetaData {
+            dest_gas_limit: gas_limit,
+            dest_gas_price: gas_price,
+            ack_gas_limit: gas_limit,
+            ack_gas_price: 5000_000,
+            relayer_fee: Uint128::zero(),
+            ack_type: AckType::AckOnBoth,
+            is_read_call: false,
+            asm_address: String::default(),
         };
-        contract_calls.push(contract_call);
+
+        let i_send_request: RouterMsg = RouterMsg::CrosschainCall {
+            version: 1,
+            route_amount: Uint128::new(0u128),
+            route_recipient: String::default(),
+            dest_chain_id: chain_id.clone(),
+            request_metadata: request_metadata.get_abi_encoded_bytes(),
+            request_packet,
+        };
+        i_requests.push(i_send_request.clone());
+        let sub_msg: SubMsg<RouterMsg> = SubMsg {
+            gas_limit: None,
+            id: CREATE_OUTBOUND_REPLY_ID,
+            reply_on: ReplyOn::Success,
+            msg: i_send_request.into(),
+        };
+        sub_messages.push(sub_msg);
     }
 
-    let expiry_timeout: u64 = DEFAULT_EXPIRY_CONFIG;
-    let outbound_batch_req: OutboundBatchRequest = OutboundBatchRequest {
-        destination_chain_type: chain_type,
-        destination_chain_id: chain_id.clone(),
-        contract_calls,
-        relayer_fee: Coin {
-            denom: String::from("route"),
-            amount: Uint128::zero(),
-        },
-        outgoing_tx_fee: OutgoingTxFee {
-            gas_limit: GAS_LIMIT.load(deps.storage)?,
-            gas_price: fetch_oracle_gas_price(deps.as_ref(), chain_id.clone(), chain_type)?,
-        },
-        is_atomic: is_atomic.unwrap_or(true),
-        exp_timestamp: env.block.time.seconds() + expiry_timeout,
-    };
-    let outbound_batch_requests: Vec<OutboundBatchRequest> = vec![outbound_batch_req];
-    TEMP_STATE_CREATE_OUTBOUND_REPLY_ID.save(deps.storage, &outbound_batch_requests)?;
-    let outbound_batch_reqs: RouterMsg = RouterMsg::OutboundBatchRequests {
-        outbound_batch_requests,
-    };
+    TEMP_STATE_CREATE_OUTBOUND_REPLY_ID.save(deps.storage, &i_requests)?;
 
-    let outbound_submessage: SubMsg<RouterMsg> = SubMsg {
-        gas_limit: None,
-        id: CREATE_OUTBOUND_REPLY_ID,
-        reply_on: ReplyOn::Success,
-        msg: outbound_batch_reqs.into(),
-    };
     let res = Response::new()
-        .add_submessage(outbound_submessage)
+        .add_submessages(sub_messages)
         .add_attribute("action", "SetCustodyContracts");
     Ok(res)
 }
@@ -150,10 +151,7 @@ pub fn set_custody_contracts(
         // let address: String = custody_contracts[i].address.replace("0x", "").to_lowercase();
         CUSTODY_CONTRACT_MAPPING.save(
             deps.storage,
-            (
-                custody_contracts[i].chain_id.clone(),
-                custody_contracts[i].chain_type,
-            ),
+            &custody_contracts[i].chain_id,
             &custody_contracts[i].address,
         )?;
     }
@@ -244,5 +242,35 @@ pub fn set_deployer(
     DEPLOYER.save(deps.storage, &deps.api.addr_validate(&deployer)?)?;
 
     let res = Response::new().add_attribute("action", "SetDeployer");
+    Ok(res)
+}
+
+/**
+ * @notice Used to set chain type info operations of the given chain (chainId, chainType).
+ * @notice Only callable by Admin.
+ * @param  chain_type_info   chain infos (chain_id & chain_type)
+
+*/
+pub fn set_chain_types_info(
+    deps: DepsMut<RouterQuery>,
+    _env: Env,
+    info: MessageInfo,
+    chain_type_info: Vec<ChainTypeInfo>,
+) -> StdResult<Response<RouterMsg>> {
+    is_owner_modifier(deps.as_ref(), &info)?;
+
+    for i in 0..chain_type_info.len() {
+        CHAIN_TYPE_MAPPING.save(
+            deps.storage,
+            &chain_type_info[i].chain_id,
+            &chain_type_info[i].chain_type,
+        )?;
+    }
+    let event_name: String = String::from("SetChainTypeInfo");
+    let set_chain_bytes_info_event: Event = Event::new(event_name);
+
+    let res = Response::new()
+        .add_attribute("action", "SetChainTypeInfo")
+        .add_event(set_chain_bytes_info_event);
     Ok(res)
 }

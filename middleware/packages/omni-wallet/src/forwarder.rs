@@ -18,6 +18,12 @@ pub struct CustodyContractInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ChainTypeInfo {
+    pub chain_id: String,
+    pub chain_type: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
     pub deployer: String,
 }
@@ -28,9 +34,7 @@ pub enum ExecuteMsg {
     // here user can define other executable messages
     InitiateTransfer {
         chain_id: String,
-        chain_type: u32,
         transfers: Vec<TransferInfo>,
-        is_atomic: Option<bool>,
     },
     SetCustodyContracts {
         custody_contracts: Vec<CustodyContractInfo>,
@@ -47,6 +51,9 @@ pub enum ExecuteMsg {
     SetDeployer {
         deployer: String,
     },
+    SetChainTypes {
+        chain_type_info: Vec<ChainTypeInfo>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -58,28 +65,15 @@ pub enum QueryMsg {
     // fetch contract version
     GetContractVersion {},
     FetchOwner {},
-    FetchCustodyContract {
-        chain_id: String,
-        chain_type: u32,
-    },
+    FetchCustodyContract { chain_id: String },
     FetchAllCustodyContracts {},
-    FetchAckData {
-        destination_chain_id: String,
-        destination_chain_type: u64,
-        outbound_batch_nonce: u64,
-    },
-    FetchContractCalls {
-        destination_chain_id: String,
-        destination_chain_type: u64,
-        outbound_batch_nonce: u64,
-    },
+    FetchAckData { nonce: u64 },
+    FetchContractCalls { nonce: u64 },
     FetchTempItem {},
     FetchRecentOutboundNonce {},
-    FetchGasPrice {
-        chain_id: String,
-        chain_type: u32,
-    },
+    FetchGasPrice { chain_id: String },
     FetchGasLimit {},
     FetchGasFactor {},
     FetchDeployer {},
+    FetchChainType { chain_id: String },
 }

@@ -8,8 +8,8 @@ use cosmwasm_std::{Reply, StdError};
 use cw2::set_contract_version;
 
 use crate::{
-    execution::forwarder_execute, handle_acknowledgement::handle_out_bound_ack_request,
-    handle_inbound::handle_in_bound_request, handle_reply::handle_reply, query::forwarder_query,
+    execution::forwarder_execute, handle_acknowledgement::handle_sudo_ack,
+    handle_inbound::handle_sudo_request, handle_reply::handle_reply, query::forwarder_query,
     state::OWNER,
 };
 
@@ -38,41 +38,29 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut<RouterQuery>, env: Env, msg: SudoMsg) -> StdResult<Response<RouterMsg>> {
     match msg {
-        SudoMsg::HandleInboundReq {
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
+        SudoMsg::HandleIReceive {
+            request_sender,
+            src_chain_id,
+            request_identifier,
             payload,
-        } => handle_in_bound_request(
+        } => handle_sudo_request(
             deps,
             env,
-            sender,
-            chain_type,
-            source_chain_id,
-            event_nonce,
+            request_sender,
+            src_chain_id,
+            request_identifier,
             payload,
         ),
-        SudoMsg::HandleOutboundAck {
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
+        SudoMsg::HandleIAck {
+            request_identifier,
+            exec_flag,
             exec_data,
             refund_amount,
-        } => handle_out_bound_ack_request(
+        } => handle_sudo_ack(
             deps,
             env,
-            outbound_tx_requested_by,
-            destination_chain_type,
-            destination_chain_id,
-            outbound_batch_nonce,
-            execution_code,
-            execution_status,
-            exec_flags,
+            request_identifier,
+            exec_flag,
             exec_data,
             refund_amount,
         ),

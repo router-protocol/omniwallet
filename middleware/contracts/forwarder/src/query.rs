@@ -1,11 +1,11 @@
 use crate::{
-    state::{CUSTODY_CONTRACT_MAPPING, DEPLOYER, GAS_LIMIT},
+    state::{CHAIN_TYPE_MAPPING, CUSTODY_CONTRACT_MAPPING, DEPLOYER, GAS_LIMIT},
     utils::fetch_oracle_gas_price,
 };
 use cosmwasm_std::{to_binary, Addr, Binary, Deps, Env, Order, StdResult};
 use cw2::get_contract_version;
 use omni_wallet::forwarder::QueryMsg;
-use router_wasm_bindings::{types::OutboundBatchRequest, RouterQuery};
+use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 use crate::state::{
     ACK_STATUS, GAS_FACTOR, LAST_OUTBOUND_NONCE, OUTBOUND_CALLS_STATE, OWNER,
@@ -16,40 +16,19 @@ pub fn forwarder_query(deps: Deps<RouterQuery>, _env: Env, msg: QueryMsg) -> Std
     match msg {
         QueryMsg::GetContractVersion {} => to_binary(&get_contract_version(deps.storage)?),
         QueryMsg::FetchOwner {} => to_binary(&fetch_owner(deps)?),
-        QueryMsg::FetchCustodyContract {
-            chain_id,
-            chain_type,
-        } => to_binary(&fetch_custody_contract(deps, chain_id, chain_type)?),
+        QueryMsg::FetchCustodyContract { chain_id } => {
+            to_binary(&fetch_custody_contract(deps, &chain_id)?)
+        }
         QueryMsg::FetchAllCustodyContracts {} => to_binary(&fetch_all_custody_contracts(deps)?),
-        QueryMsg::FetchAckData {
-            destination_chain_id,
-            destination_chain_type,
-            outbound_batch_nonce,
-        } => to_binary(&fetch_ack_data(
-            deps,
-            destination_chain_id,
-            destination_chain_type,
-            outbound_batch_nonce,
-        )?),
-        QueryMsg::FetchContractCalls {
-            destination_chain_id,
-            destination_chain_type,
-            outbound_batch_nonce,
-        } => to_binary(&fetch_contract_calls(
-            deps,
-            destination_chain_id,
-            destination_chain_type,
-            outbound_batch_nonce,
-        )?),
+        QueryMsg::FetchAckData { nonce } => to_binary(&fetch_ack_data(deps, nonce)?),
+        QueryMsg::FetchContractCalls { nonce } => to_binary(&fetch_contract_calls(deps, nonce)?),
         QueryMsg::FetchTempItem {} => to_binary(&fetch_temp_state(deps)?),
         QueryMsg::FetchRecentOutboundNonce {} => to_binary(&fetch_recent_out_bound_nonce(deps)?),
         QueryMsg::FetchGasFactor {} => to_binary(&fetch_gas_factor(deps)?),
-        QueryMsg::FetchGasPrice {
-            chain_id,
-            chain_type,
-        } => to_binary(&fetch_oracle_gas_price(deps, chain_id, chain_type)?),
+        QueryMsg::FetchGasPrice { chain_id } => to_binary(&fetch_oracle_gas_price(deps, chain_id)?),
         QueryMsg::FetchGasLimit {} => to_binary(&fetch_gas_limit(deps)?),
         QueryMsg::FetchDeployer {} => to_binary(&fetch_deployer(deps)?),
+        QueryMsg::FetchChainType { chain_id } => to_binary(&fetch_chain_type(deps, &chain_id)?),
     }
 }
 
@@ -63,22 +42,15 @@ pub fn fetch_owner(deps: Deps<RouterQuery>) -> StdResult<Addr> {
 /**
  * @notice Used to fetch the custody contract
  * @param   chain_id
- * @param   chain_type
 */
-pub fn fetch_custody_contract(
-    deps: Deps<RouterQuery>,
-    chain_id: String,
-    chain_type: u32,
-) -> StdResult<String> {
-    CUSTODY_CONTRACT_MAPPING.load(deps.storage, (chain_id, chain_type))
+pub fn fetch_custody_contract(deps: Deps<RouterQuery>, chain_id: &str) -> StdResult<String> {
+    CUSTODY_CONTRACT_MAPPING.load(deps.storage, chain_id)
 }
 
 /**
     @notice Used to fetch if all white listed contracts details
 */
-pub fn fetch_all_custody_contracts(
-    deps: Deps<RouterQuery>,
-) -> StdResult<Vec<((String, u32), String)>> {
+pub fn fetch_all_custody_contracts(deps: Deps<RouterQuery>) -> StdResult<Vec<(String, String)>> {
     match CUSTODY_CONTRACT_MAPPING
         .range(deps.storage, None, None, Order::Ascending)
         .collect()
@@ -88,33 +60,17 @@ pub fn fetch_all_custody_contracts(
     };
 }
 
-pub fn fetch_ack_data(
-    deps: Deps<RouterQuery>,
-    destination_chain_id: String,
-    destination_chain_type: u64,
-    outbound_batch_nonce: u64,
-) -> StdResult<String> {
-    let mut ack_status_key: String = destination_chain_id.clone();
-    ack_status_key.push_str(&destination_chain_type.to_string());
-    ack_status_key.push_str(&outbound_batch_nonce.to_string());
-
+pub fn fetch_ack_data(deps: Deps<RouterQuery>, nonce: u64) -> StdResult<String> {
+    let ack_status_key: String = nonce.to_string();
     ACK_STATUS.load(deps.storage, &ack_status_key)
 }
 
-pub fn fetch_contract_calls(
-    deps: Deps<RouterQuery>,
-    destination_chain_id: String,
-    destination_chain_type: u64,
-    outbound_batch_nonce: u64,
-) -> StdResult<OutboundBatchRequest> {
-    let mut ack_status_key: String = destination_chain_id.clone();
-    ack_status_key.push_str(&destination_chain_type.to_string());
-    ack_status_key.push_str(&outbound_batch_nonce.to_string());
-
+pub fn fetch_contract_calls(deps: Deps<RouterQuery>, nonce: u64) -> StdResult<RouterMsg> {
+    let ack_status_key: String = nonce.to_string();
     OUTBOUND_CALLS_STATE.load(deps.storage, &ack_status_key)
 }
 
-pub fn fetch_temp_state(deps: Deps<RouterQuery>) -> StdResult<Vec<OutboundBatchRequest>> {
+pub fn fetch_temp_state(deps: Deps<RouterQuery>) -> StdResult<Vec<RouterMsg>> {
     TEMP_STATE_CREATE_OUTBOUND_REPLY_ID.load(deps.storage)
 }
 
@@ -141,4 +97,12 @@ pub fn fetch_gas_limit(deps: Deps<RouterQuery>) -> StdResult<u64> {
 */
 pub fn fetch_deployer(deps: Deps<RouterQuery>) -> StdResult<String> {
     Ok(DEPLOYER.load(deps.storage).unwrap().to_string())
+}
+
+/**
+ * @notice Used to fetch chain_info.
+ * @param   chain_id
+*/
+pub fn fetch_chain_type(deps: Deps<RouterQuery>, chain_id: &str) -> StdResult<u64> {
+    CHAIN_TYPE_MAPPING.load(deps.storage, chain_id)
 }
