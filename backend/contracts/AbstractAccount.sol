@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "evm-gateway-contract/contracts/IGateway.sol";
-import "evm-gateway-contract/contracts/Utils.sol";
-import "evm-gateway-contract/contracts/IApplication.sol";
+import "@routerprotocol/evm-gateway-contracts/contracts/IGateway.sol";
+import "@routerprotocol/evm-gateway-contracts/contracts/IDapp.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract AbstractAccount is IApplication {
+contract AbstractAccount is IDapp  {
     IGateway public gateway;
     string public forwarderAddress;
 
-    constructor(address gatewayAddress, string memory _forwarderAddress) {
+    constructor(address gatewayAddress, string memory _forwarderAddress,string memory feePayer) {
         gateway = IGateway(gatewayAddress);
         forwarderAddress = _forwarderAddress;
+        gateway.setDappMetadata(feePayer);
     }
 
     event SendToEvent(
@@ -23,14 +23,14 @@ contract AbstractAccount is IApplication {
     );
 
     /// @notice function to handle the request received from router chain
-    /// @param sender is a forwarder Address (middleware contract)
-    /// @param payload consists of {recipient,token,amount,isNative}
-    function handleRequestFromRouter(string memory sender, bytes memory payload)
-        public
+    /// @param requestSender is a forwarder Address (middleware contract)
+    /// @param packet consists of {recipient,token,amount,isNative}
+    function iReceive(string memory requestSender, bytes memory packet, string memory srcChainId)
+        external override returns (bytes memory)
     {
         require(msg.sender == address(gateway));
         require(
-            keccak256(abi.encode(sender)) ==
+            keccak256(abi.encode(requestSender)) ==
                 keccak256(abi.encode(forwarderAddress)),
             "Only user's forwarder can call"
         );
@@ -39,9 +39,9 @@ contract AbstractAccount is IApplication {
             address token,
             uint256 amount,
             bool isNative
-        ) = abi.decode(payload, (address, address, uint256, bool));
+        ) = abi.decode(packet, (address, address, uint256, bool));
         _handleSendTo(recipient, token, amount, isNative);
-        emit SendToEvent(sender, recipient, token, amount);
+        emit SendToEvent(requestSender, recipient, token, amount);
     }
 
     /// @notice function to handle transfer logic it will handle seprately for native and ERC20 tokens
@@ -63,6 +63,6 @@ contract AbstractAccount is IApplication {
             require(token.transfer(recipient, amount), "Transfer failed");
         }
     }
-
+function iAck(uint256 requestIdentifier, bool execFlags, bytes memory execData) external {}
      receive() external payable{}
 }

@@ -827,14 +827,27 @@
   integrity sha512-U1RH9OQ1mWYQfb+moX5aTgGjpVVlOcpiFI47wwnaGG4kLhcTy90cNiapoqZenxcRAITVbr0/+QSduINL5EsUIQ==
 
 "@openzeppelin/contracts-upgradeable@^4.7.3":
-  version "4.8.1"
-  resolved "https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.8.1.tgz"
-  integrity sha512-1wTv+20lNiC0R07jyIAbHU7TNHKRwGiTGRfiNnA8jOWjKT98g5OgLpYWOi40Vgpk8SPLA9EvfJAbAeIyVn+7Bw==
+  version "4.8.3"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.8.3.tgz#6b076a7b751811b90fe3a172a7faeaa603e13a3f"
+  integrity sha512-SXDRl7HKpl2WDoJpn7CK/M9U4Z8gNXDHHChAKh0Iz+Wew3wu6CmFYBeie3je8V0GSXZAIYYwUktSrnW/kwVPtg==
 
-"@openzeppelin/contracts@^4.4.1", "@openzeppelin/contracts@^4.8.1":
+"@openzeppelin/contracts@^4.4.1":
+  version "4.8.3"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.8.3.tgz#cbef3146bfc570849405f59cba18235da95a252a"
+  integrity sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==
+
+"@openzeppelin/contracts@^4.8.1":
   version "4.8.1"
   resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.8.1.tgz"
   integrity sha512-xQ6eUZl+RDyb/FiZe1h+U7qr/f4p/SrTSQcTPH2bjur3C5DbuW/zFgCU/b1P/xcIaEqJep+9ju4xDRi3rmChdQ==
+
+"@routerprotocol/evm-gateway-contracts@^1.1.11":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@routerprotocol/evm-gateway-contracts/-/evm-gateway-contracts-1.1.11.tgz#ebd0f2504d79fc7055a4d21e215d09983c8a1d32"
+  integrity sha512-lUW6ry17imFujeUPcS4wqQoQT1UUpQjboPLXcRkm2YncQsqo8gw47+l7A5m0N0aRRWnRKLg+CgJlhGl7HRSmhA==
+  dependencies:
+    "@openzeppelin/contracts" "^4.4.1"
+    "@openzeppelin/contracts-upgradeable" "^4.7.3"
 
 "@scure/base@~1.1.0":
   version "1.1.1"
@@ -1690,23 +1703,6 @@ event-target-shim@^5.0.0:
   version "5.0.1"
   resolved "https://registry.npmjs.org/event-target-shim/-/event-target-shim-5.0.1.tgz"
   integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
-
-evm-gateway-contract@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/evm-gateway-contract/-/evm-gateway-contract-1.0.1.tgz"
-  integrity sha512-VV5xdRr6NZ6jGE5N8fFxtL6n7RfEawqyb5QHSjZFJjyKPStvaqpHJU/b80uqoyYxfu6kUgJLN+ZaBCU1rFhGAg==
-  dependencies:
-    "@openzeppelin/contracts" "^4.4.1"
-    "@openzeppelin/contracts-upgradeable" "^4.7.3"
-
-evm-gateway-contract@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.npmjs.org/evm-gateway-contract/-/evm-gateway-contract-1.0.5.tgz"
-  integrity sha512-HunHq6HeFyI1tV4dGip5wNIln8c/CgdTyg3fZT1g4uB4ESsOFNX6CFe7Y+fsFONyV0ZFKGbEMzH+fRcfuMTv2Q==
-  dependencies:
-    "@openzeppelin/contracts" "^4.4.1"
-    "@openzeppelin/contracts-upgradeable" "^4.7.3"
-    evm-gateway-contract "1.0.1"
 
 evp_bytestokey@^1.0.3:
   version "1.0.3"
