@@ -17,6 +17,7 @@ async function main() {
   
 
   console.log(`Deployed AbstractAccount ConstuctorParams chainId ${chainId}: ${ConstuctorParams}`);
+  console.log(`Deployed AbstractAccount contractByteCode chainId ${chainId}: ${contractByteCode}`);
   console.log(`Deployed AbstractAccount bytecode chainId ${chainId}: ${DeployedBytecode}`);
 
 }

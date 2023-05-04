@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { FORWARDER_ADDRESS, GATEWAY_ADDRESS } from "./constant";
+import { FORWARDER_ADDRESS, GATEWAY_ADDRESS,FEE_PAYER } from "./constant";
 import hre from "hardhat";
 
 
@@ -9,7 +9,7 @@ async function main() {
     return
   }
   const AbstractAccount = await ethers.getContractFactory("AbstractAccount");
-  const contract = await AbstractAccount.deploy(GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS);
+  const contract = await AbstractAccount.deploy(GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS,FEE_PAYER);
   console.log(`Params: gateway: ${GATEWAY_ADDRESS[chainId]} and forwarder: ${FORWARDER_ADDRESS}`)
   await contract.deployed();
   console.log(`Deployed AbstractAccount Address deployed to ${contract.address}`);
@@ -20,7 +20,8 @@ async function main() {
       address: contract.address,
       constructorArguments: [
         GATEWAY_ADDRESS[chainId],
-        FORWARDER_ADDRESS
+        FORWARDER_ADDRESS,
+        FEE_PAYER
       ],
     });
   }, 8000);
