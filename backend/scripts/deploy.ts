@@ -12,7 +12,7 @@ async function main() {
   const contract = await AbstractAccount.deploy(GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS,FEE_PAYER);
   console.log(`Params: gateway: ${GATEWAY_ADDRESS[chainId]} and forwarder: ${FORWARDER_ADDRESS}`)
   await contract.deployed();
-  console.log(`Deployed AbstractAccount Address deployed to ${contract.address}`);
+  // console.log(`Deployed AbstractAccount Address deployed to ${contract.address}`);
 
   setTimeout(async function() {
     console.log("Verifying contract...")

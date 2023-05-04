@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { FORWARDER_ADDRESS, GATEWAY_ADDRESS } from "./constant";
+import { FEE_PAYER, FORWARDER_ADDRESS, GATEWAY_ADDRESS } from "./constant";
 import hre from "hardhat";
 
 
@@ -12,13 +12,13 @@ async function main() {
   }
   const AbstractAccount = await ethers.getContractFactory("AbstractAccount");
   const contractByteCode = AbstractAccount.bytecode
-  let ConstuctorParams = ethers.utils.defaultAbiCoder.encode(["address","string"],[GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS])
+  let ConstuctorParams = ethers.utils.defaultAbiCoder.encode(["address","string","string"],[GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS,FEE_PAYER])
   let DeployedBytecode = `${contractByteCode}${ConstuctorParams}`
   
-
+ console.log("ConstuctorParams: ",GATEWAY_ADDRESS[chainId],FORWARDER_ADDRESS,FEE_PAYER)
   console.log(`Deployed AbstractAccount ConstuctorParams chainId ${chainId}: ${ConstuctorParams}`);
   console.log(`Deployed AbstractAccount contractByteCode chainId ${chainId}: ${contractByteCode}`);
-  console.log(`Deployed AbstractAccount bytecode chainId ${chainId}: ${DeployedBytecode}`);
+  // console.log(`Deployed AbstractAccount bytecode chainId ${chainId}: ${DeployedBytecode}`);
 
 }
 
