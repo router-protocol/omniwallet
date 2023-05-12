@@ -1,7 +1,7 @@
 use crate::state::{DEPLOYER, FORWARDER_CODE_ID, FORWARDER_CONTRACT_MAPPING};
 use cosmwasm_std::{to_binary, Addr, Binary, Deps, Env, StdResult};
 use cw2::get_contract_version;
-use omni_wallet::forwarder_contract::QueryMsg;
+use omni_wallet::forwarder_deployer::QueryMsg;
 use router_wasm_bindings::RouterQuery;
 
 use crate::state::OWNER;

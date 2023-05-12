@@ -2,7 +2,7 @@ use crate::{
     reply::handle_reply,
     state::{DEPLOYER, FORWARDER_CODE_ID},
 };
-use omni_wallet::forwarder_contract::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use omni_wallet::forwarder_deployer::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 #[cfg(not(feature = "library"))]

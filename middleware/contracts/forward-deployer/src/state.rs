@@ -15,3 +15,12 @@ pub const TEMP_FORWARDER_OWNER: Item<String> = Item::new("temp_forwarder_owner")
 // Forwarder Contract Mapping
 // UserAddress => ForwarderContractAddress
 pub const FORWARDER_CONTRACT_MAPPING: Map<String, String> = Map::new("forwarder_contract_mapping");
+
+pub const TEMP_DEPLOY_CONTRACT: Item<(
+    String,
+    String,
+    Vec<String>,
+    Vec<String>,
+    Vec<u64>,
+    Vec<u64>,
+)> = Item::new("temp_deploy_contract_info");

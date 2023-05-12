@@ -42,7 +42,6 @@ fn test_execute_update_bridge_address() {
     let msg: ExecuteMsg = ExecuteMsg::SetCustodyContracts {
         custody_contracts: vec![CustodyContractInfo {
             chain_id: String::from("43113"),
-            chain_type: 0,
             address: String::from("0xFEE2d12E90b721df5C135F25E2B4Ae9E483CcE3D"),
         }],
     };

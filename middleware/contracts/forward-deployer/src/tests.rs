@@ -7,7 +7,7 @@ use cosmwasm_std::{
     testing::{mock_env, mock_info},
     DepsMut,
 };
-use omni_wallet::forwarder_contract::InstantiateMsg;
+use omni_wallet::forwarder_deployer::InstantiateMsg;
 use router_wasm_bindings::RouterQuery;
 
 const INIT_ADDRESS: &str = "init_address";

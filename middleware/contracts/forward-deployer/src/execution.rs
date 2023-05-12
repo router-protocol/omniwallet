@@ -8,10 +8,10 @@ use crate::{
     modifers::is_owner_modifier,
     state::{
         DEPLOYER, FORWARDER_CODE_ID, FORWARDER_CONTRACT_MAPPING, INSTANTIATE_REPLY_ID, OWNER,
-        TEMP_FORWARDER_OWNER,
+        TEMP_DEPLOY_CONTRACT, TEMP_FORWARDER_OWNER,
     },
 };
-use omni_wallet::forwarder_contract::ExecuteMsg;
+use omni_wallet::forwarder_deployer::ExecuteMsg;
 
 pub fn handle_execute(
     deps: DepsMut<RouterQuery>,
@@ -20,7 +20,24 @@ pub fn handle_execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response<RouterMsg>> {
     match msg {
-        ExecuteMsg::DeployForwarderContract {} => deploy_forwarder_contract(deps, &env, &info),
+        ExecuteMsg::DeployForwarderContract {
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        } => deploy_forwarder_contract(
+            deps,
+            &env,
+            &info,
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        ),
         ExecuteMsg::SetCodeId { code_id } => set_code_id(deps, &env, &info, code_id),
         ExecuteMsg::SetForwarderAdmin { admin } => set_forwarder_admin(deps, &env, &info, admin),
         ExecuteMsg::SetOwner { new_owner } => set_owner(deps, &env, &info, new_owner),
@@ -35,9 +52,26 @@ pub fn deploy_forwarder_contract(
     deps: DepsMut<RouterQuery>,
     _env: &Env,
     info: &MessageInfo,
+    code: String,
+    salt: String,
+    constructor_args: Vec<String>,
+    chain_ids: Vec<String>,
+    gas_limits: Vec<u64>,
+    gas_prices: Vec<u64>,
 ) -> StdResult<Response<RouterMsg>> {
     let sender: String = info.sender.to_string();
     TEMP_FORWARDER_OWNER.save(deps.storage, &sender)?;
+    TEMP_DEPLOY_CONTRACT.save(
+        deps.storage,
+        &(
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        ),
+    )?;
     assert_eq!(FORWARDER_CONTRACT_MAPPING.has(deps.storage, sender), false);
 
     let code_id: u64 = FORWARDER_CODE_ID.load(deps.storage)?;

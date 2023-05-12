@@ -11,11 +11,26 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     // here user can define other executable messages
-    DeployForwarderContract {},
-    SetForwarderAdmin { admin: String },
-    SetOwner { new_owner: String },
-    SetDeployer { deployer: String },
-    SetCodeId { code_id: u64 },
+    DeployForwarderContract {
+        code: String,
+        salt: String,
+        constructor_args: Vec<String>,
+        chain_ids: Vec<String>,
+        gas_limits: Vec<u64>,
+        gas_prices: Vec<u64>,
+    },
+    SetForwarderAdmin {
+        admin: String,
+    },
+    SetOwner {
+        new_owner: String,
+    },
+    SetDeployer {
+        deployer: String,
+    },
+    SetCodeId {
+        code_id: u64,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -30,4 +45,18 @@ pub enum QueryMsg {
     FetchForwarderContract { address: String },
     FetchCodeId {},
     FetchDeployer {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum DeployerExecuteMsg {
+    DeployContract {
+        code: String,
+        salt: String,
+        constructor_args: Vec<String>,
+        chain_ids: Vec<String>,
+        gas_limits: Vec<u64>,
+        gas_prices: Vec<u64>,
+        forwarder_contract: String,
+    },
 }

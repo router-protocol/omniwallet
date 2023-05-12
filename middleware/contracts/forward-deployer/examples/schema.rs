@@ -3,11 +3,11 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use omni_wallet::forwarder_contract::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use omni_wallet::forwarder_deployer::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
-    out_dir.push("schema/forwarder-contract");
+    out_dir.push("schema/forwarder-deployer");
     create_dir_all(&out_dir).unwrap();
     remove_schemas(&out_dir).unwrap();
 

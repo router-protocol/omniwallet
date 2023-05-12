@@ -14,7 +14,6 @@ pub struct TransferInfo {
 pub struct CustodyContractInfo {
     pub address: String,
     pub chain_id: String,
-    pub chain_type: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
