@@ -5,11 +5,15 @@ import "@routerprotocol/evm-gateway-contracts/contracts/IGateway.sol";
 import "@routerprotocol/evm-gateway-contracts/contracts/IDapp.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract AbstractAccount is IDapp  {
+contract AbstractAccount is IDapp {
     IGateway public gateway;
     string public forwarderAddress;
 
-    constructor(address gatewayAddress, string memory _forwarderAddress,string memory feePayer) {
+    constructor(
+        address gatewayAddress,
+        string memory _forwarderAddress,
+        string memory feePayer
+    ) {
         gateway = IGateway(gatewayAddress);
         forwarderAddress = _forwarderAddress;
         gateway.setDappMetadata(feePayer);
@@ -25,9 +29,11 @@ contract AbstractAccount is IDapp  {
     /// @notice function to handle the request received from router chain
     /// @param requestSender is a forwarder Address (middleware contract)
     /// @param packet consists of {recipient,token,amount,isNative}
-    function iReceive(string memory requestSender, bytes memory packet, string memory srcChainId)
-        external override returns (bytes memory)
-    {
+    function iReceive(
+        string memory requestSender,
+        bytes memory packet,
+        string memory srcChainId
+    ) external override returns (bytes memory) {
         require(msg.sender == address(gateway));
         require(
             keccak256(abi.encode(requestSender)) ==
@@ -63,6 +69,12 @@ contract AbstractAccount is IDapp  {
             require(token.transfer(recipient, amount), "Transfer failed");
         }
     }
-function iAck(uint256 requestIdentifier, bool execFlags, bytes memory execData) external {}
-     receive() external payable{}
+
+    function iAck(
+        uint256 requestIdentifier,
+        bool execFlags,
+        bytes memory execData
+    ) external {}
+
+    receive() external payable {}
 }

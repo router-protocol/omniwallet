@@ -8,9 +8,11 @@ pub const DEFAULT_EXPIRY_CONFIG: u64 = 5 * 60 * 60; // 5 hours
 pub const DEFAULT_GAS_LIMIT: u64 = 300_000;
 
 // ADMIN address to perform admin priviledged operations
-pub const OWNER: Item<Addr> = Item::new("forwarder_contract_owner");
+pub const OWNER: Item<String> = Item::new("forwarder_contract_owner");
 
 pub const DEPLOYER: Item<Addr> = Item::new("deployer_address");
+
+pub const FORWARDER_DEPLOYER: Item<Addr> = Item::new("forwarder_deployer_address");
 
 // Custody Smart Contract Addresses Mapping
 // (ChainId, ChainType) => CustodySmartContractAddress

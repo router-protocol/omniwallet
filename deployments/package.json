@@ -1,0 +1,19 @@
+{
+  "name": "omni-wallet-deployment",
+  "description": "The Omni Wallet deployment scripts",
+  "version": "0.1.0",
+  "author": {
+    "name": "Gaurav Agrawal",
+    "email": "gaurav@routerprotocol.com"
+  },
+  "private": true,
+  "dependencies": {
+    "@cosmjs/crypto": "^0.29.5",
+    "@cosmjs/stargate": "^0.29.5",
+    "@routerprotocol/router-chain-sdk-ts": "^0.8.44",
+    "dotenv": "^16.0.3",
+    "pako": "^2.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+}

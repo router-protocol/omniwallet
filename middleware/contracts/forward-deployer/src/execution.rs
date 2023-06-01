@@ -1,14 +1,14 @@
 use cosmwasm_std::{
     to_binary, CosmosMsg, DepsMut, Env, MessageInfo, ReplyOn, Response, StdResult, SubMsg, WasmMsg,
 };
-use omni_wallet::forwarder::{ExecuteMsg as ForwarderExecuteMsg, InstantiateMsg};
+use omni_wallet::forwarder::{ChainTypeInfo, ExecuteMsg as ForwarderExecuteMsg, InstantiateMsg};
 use router_wasm_bindings::{RouterMsg, RouterQuery};
 
 use crate::{
     modifers::is_owner_modifier,
     state::{
         DEPLOYER, FORWARDER_CODE_ID, FORWARDER_CONTRACT_MAPPING, INSTANTIATE_REPLY_ID, OWNER,
-        TEMP_DEPLOY_CONTRACT, TEMP_FORWARDER_OWNER,
+        TEMP_FORWARDER_OWNER,
     },
 };
 use omni_wallet::forwarder_deployer::ExecuteMsg;
@@ -20,24 +20,9 @@ pub fn handle_execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response<RouterMsg>> {
     match msg {
-        ExecuteMsg::DeployForwarderContract {
-            code,
-            salt,
-            constructor_args,
-            chain_ids,
-            gas_limits,
-            gas_prices,
-        } => deploy_forwarder_contract(
-            deps,
-            &env,
-            &info,
-            code,
-            salt,
-            constructor_args,
-            chain_ids,
-            gas_limits,
-            gas_prices,
-        ),
+        ExecuteMsg::DeployForwarderContract { chain_type_info } => {
+            deploy_forwarder_contract(deps, &env, &info, chain_type_info)
+        }
         ExecuteMsg::SetCodeId { code_id } => set_code_id(deps, &env, &info, code_id),
         ExecuteMsg::SetForwarderAdmin { admin } => set_forwarder_admin(deps, &env, &info, admin),
         ExecuteMsg::SetOwner { new_owner } => set_owner(deps, &env, &info, new_owner),
@@ -52,26 +37,10 @@ pub fn deploy_forwarder_contract(
     deps: DepsMut<RouterQuery>,
     _env: &Env,
     info: &MessageInfo,
-    code: String,
-    salt: String,
-    constructor_args: Vec<String>,
-    chain_ids: Vec<String>,
-    gas_limits: Vec<u64>,
-    gas_prices: Vec<u64>,
+    chain_type_info: Vec<ChainTypeInfo>,
 ) -> StdResult<Response<RouterMsg>> {
     let sender: String = info.sender.to_string();
     TEMP_FORWARDER_OWNER.save(deps.storage, &sender)?;
-    TEMP_DEPLOY_CONTRACT.save(
-        deps.storage,
-        &(
-            code,
-            salt,
-            constructor_args,
-            chain_ids,
-            gas_limits,
-            gas_prices,
-        ),
-    )?;
     assert_eq!(FORWARDER_CONTRACT_MAPPING.has(deps.storage, sender), false);
 
     let code_id: u64 = FORWARDER_CODE_ID.load(deps.storage)?;
@@ -88,6 +57,8 @@ pub fn deploy_forwarder_contract(
             label: "Forwarder Contract".to_string(),
             msg: to_binary(&InstantiateMsg {
                 deployer: deployer_address,
+                owner: info.sender.to_string(),
+                chain_type_info,
             })?,
         }
         .into(),

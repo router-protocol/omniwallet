@@ -2,7 +2,7 @@ use crate::{
     state::{CHAIN_TYPE_MAPPING, CUSTODY_CONTRACT_MAPPING, DEPLOYER, GAS_LIMIT},
     utils::fetch_oracle_gas_price,
 };
-use cosmwasm_std::{to_binary, Addr, Binary, Deps, Env, Order, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, Env, Order, StdResult};
 use cw2::get_contract_version;
 use omni_wallet::forwarder::QueryMsg;
 use router_wasm_bindings::{RouterMsg, RouterQuery};
@@ -35,7 +35,7 @@ pub fn forwarder_query(deps: Deps<RouterQuery>, _env: Env, msg: QueryMsg) -> Std
 /**
  * @notice Used to fetch the owner address
 */
-pub fn fetch_owner(deps: Deps<RouterQuery>) -> StdResult<Addr> {
+pub fn fetch_owner(deps: Deps<RouterQuery>) -> StdResult<String> {
     OWNER.load(deps.storage)
 }
 

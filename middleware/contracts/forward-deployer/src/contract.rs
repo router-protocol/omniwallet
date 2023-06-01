@@ -14,7 +14,7 @@ use crate::{execution::handle_execute, query::handle_query, state::OWNER};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "forwarder-deployer-contract";
-const CONTRACT_VERSION: &str = "0.1.07";
+const CONTRACT_VERSION: &str = "0.1.08";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(

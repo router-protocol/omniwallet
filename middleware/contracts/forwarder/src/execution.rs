@@ -1,5 +1,6 @@
 use cosmwasm_std::{
-    DepsMut, Env, Event, MessageInfo, ReplyOn, Response, StdError, StdResult, SubMsg, Uint128,
+    to_binary, BankMsg, Coin, CosmosMsg, DepsMut, Env, Event, MessageInfo, ReplyOn, Response,
+    StdError, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use router_wasm_bindings::{
     ethabi::{
@@ -13,14 +14,17 @@ use router_wasm_bindings::{
 };
 
 use crate::{
-    modifers::{is_deployer_modifier, is_owner_modifier},
+    modifers::{is_deployer_modifier, is_owner_modifier, is_owner_or_forwarder_contract},
     state::{
         CHAIN_TYPE_MAPPING, CREATE_OUTBOUND_REPLY_ID, CUSTODY_CONTRACT_MAPPING, DEPLOYER,
         GAS_FACTOR, GAS_LIMIT, OWNER, TEMP_STATE_CREATE_OUTBOUND_REPLY_ID,
     },
     utils::fetch_oracle_gas_price,
 };
-use omni_wallet::forwarder::{ChainTypeInfo, CustodyContractInfo, ExecuteMsg, TransferInfo};
+use omni_wallet::{
+    forwarder::{ChainTypeInfo, CustodyContractInfo, ExecuteMsg, TransferInfo},
+    forwarder_deployer::DeployerExecuteMsg,
+};
 
 pub fn forwarder_execute(
     deps: DepsMut<RouterQuery>,
@@ -42,6 +46,27 @@ pub fn forwarder_execute(
         ExecuteMsg::SetDeployer { deployer } => set_deployer(deps, &env, &info, deployer),
         ExecuteMsg::SetChainTypes { chain_type_info } => {
             set_chain_types_info(deps, env, info, chain_type_info)
+        }
+        ExecuteMsg::DeployContract {
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        } => deploy_cross_chain_contract(
+            deps,
+            &env,
+            &info,
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        ),
+        ExecuteMsg::WithdrawFunds { recipient, amount } => {
+            withdraw_funds(deps, &env, &info, recipient, amount)
         }
     }
 }
@@ -220,7 +245,8 @@ pub fn set_owner(
 ) -> StdResult<Response<RouterMsg>> {
     is_owner_modifier(deps.as_ref(), &info)?;
 
-    OWNER.save(deps.storage, &deps.api.addr_validate(&new_owner)?)?;
+    deps.api.addr_validate(&new_owner)?;
+    OWNER.save(deps.storage, &new_owner)?;
 
     let res = Response::new().add_attribute("action", "SetOwner");
     Ok(res)
@@ -258,7 +284,13 @@ pub fn set_chain_types_info(
     chain_type_info: Vec<ChainTypeInfo>,
 ) -> StdResult<Response<RouterMsg>> {
     is_owner_modifier(deps.as_ref(), &info)?;
+    _set_chain_types_info(deps, chain_type_info)
+}
 
+pub fn _set_chain_types_info(
+    deps: DepsMut<RouterQuery>,
+    chain_type_info: Vec<ChainTypeInfo>,
+) -> StdResult<Response<RouterMsg>> {
     for i in 0..chain_type_info.len() {
         CHAIN_TYPE_MAPPING.save(
             deps.storage,
@@ -272,5 +304,63 @@ pub fn set_chain_types_info(
     let res = Response::new()
         .add_attribute("action", "SetChainTypeInfo")
         .add_event(set_chain_bytes_info_event);
+    Ok(res)
+}
+/**
+ * @notice Used to deploy contract on destination chains
+ * @notice Only callable by forwarder Deployer.
+ */
+pub fn deploy_cross_chain_contract(
+    deps: DepsMut<RouterQuery>,
+    _env: &Env,
+    info: &MessageInfo,
+    code: String,
+    salt: String,
+    constructor_args: Vec<String>,
+    chain_ids: Vec<String>,
+    gas_limits: Vec<u64>,
+    gas_prices: Vec<u64>,
+) -> StdResult<Response<RouterMsg>> {
+    is_owner_or_forwarder_contract(deps.as_ref(), info)?;
+    let deployer = DEPLOYER.load(deps.storage)?;
+    let exec_msg: CosmosMsg<RouterMsg> = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: deployer.to_string(),
+        funds: info.funds.clone(),
+        msg: to_binary(&DeployerExecuteMsg::DeployContract {
+            code,
+            salt,
+            constructor_args,
+            chain_ids,
+            gas_limits,
+            gas_prices,
+        })?,
+    });
+    return Ok(Response::new().add_message(exec_msg));
+}
+
+/**
+ * @notice Used to withdraw funds
+ * @notice Only callable by Admin.
+*/
+pub fn withdraw_funds(
+    deps: DepsMut<RouterQuery>,
+    _env: &Env,
+    info: &MessageInfo,
+    recipient: String,
+    amount: Uint128,
+) -> StdResult<Response<RouterMsg>> {
+    is_owner_modifier(deps.as_ref(), &info)?;
+
+    let bank_msg = BankMsg::Send {
+        to_address: recipient.into(),
+        amount: vec![Coin {
+            amount,
+            denom: "route".to_string(),
+        }],
+    };
+
+    let res = Response::new()
+        .add_message(bank_msg)
+        .add_attribute("action", "SetGasFactor");
     Ok(res)
 }

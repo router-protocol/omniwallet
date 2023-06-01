@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+use std::vec;
 
 use crate::contract::execute;
 use crate::contract::instantiate;
@@ -26,6 +27,8 @@ fn get_mock_dependencies() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Route
 fn do_instantiate(mut deps: DepsMut<RouterQuery>) {
     let instantiate_msg = InstantiateMsg {
         deployer: INIT_ADDRESS.to_string(),
+        owner: INIT_ADDRESS.to_string(),
+        chain_type_info: vec![],
     };
     let info = mock_info(INIT_ADDRESS, &[]);
     let env = mock_env();

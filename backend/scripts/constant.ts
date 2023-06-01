@@ -1,8 +1,8 @@
 import { SupportedChainId } from "../hardhat.config";
 
-  export const FORWARDER_ADDRESS = "router1qxs8gwpv6kks2ypxxd4s0730qh6y0h006xe3ldtprjxny5hlr4pqcdwz0j"
+  export const FORWARDER_ADDRESS = "router13sp9h2p6lg6vdkayg40wnyxfqkhwr39jvq9c893dxs49e9upya0q0h9xcq"
   export const FEE_PAYER = "router1z6ralzg5tsznq9s6xmutyeen7evylcj7harhmq"
   export const GATEWAY_ADDRESS: { [key: string]: string } = {
-    [SupportedChainId.FUJI]: "0xcD6a879234Fc8C94ca077Baf514a5cBE84E8b3A6",
-    [SupportedChainId.POLYGON_MUMBAI]: "0xb178f5CD8c3A5D65d26D9e1eE5E3694b4903D91a",
+    [SupportedChainId.FUJI]: "0xcAa6223D0d41FB27d6FC81428779751317FC24cB",
+    [SupportedChainId.POLYGON_MUMBAI]: "0xcAa6223D0d41FB27d6FC81428779751317FC24cB",
   };

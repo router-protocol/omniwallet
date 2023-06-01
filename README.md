@@ -33,3 +33,13 @@ A POC to showcase Account Abstraction using Routerchain
 
 - The AbstractAccount can be invoked only by Forwarder contract.
 - Forwarder Contract can be invoked only by respective owner (user)
+
+#### Documentation
+
+To Build the code documentation, Please use the following command.
+
+```shell
+cd middlwware
+cargo doc --document-private-items
+```
+The documentation will be generated in HTML format and can be viewed by opening the `target/doc` directory. Open the `index.html` file in your browser to navigate through the documentation.

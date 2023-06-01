@@ -1,6 +1,11 @@
-use crate::state::{DEFAULT_GAS_LIMIT, DEPLOYER, GAS_FACTOR, GAS_LIMIT};
+use crate::{
+    execution::_set_chain_types_info,
+    state::{
+        CHAIN_TYPE_MAPPING, DEFAULT_GAS_LIMIT, DEPLOYER, FORWARDER_DEPLOYER, GAS_FACTOR, GAS_LIMIT,
+    },
+};
 use omni_wallet::forwarder::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use router_wasm_bindings::{RouterMsg, RouterQuery, SudoMsg};
+use router_wasm_bindings::{types::ChainType, RouterMsg, RouterQuery, SudoMsg};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
@@ -15,24 +20,47 @@ use crate::{
 
 // version info for migration info
 const CONTRACT_NAME: &str = "forwarder-contract";
-const CONTRACT_VERSION: &str = "0.1.05";
+const CONTRACT_VERSION: &str = "0.1.06";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+/// Instantiates the smart contract.
 pub fn instantiate(
-    deps: DepsMut<RouterQuery>,
-    _env: Env,
+    mut deps: DepsMut<RouterQuery>,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> StdResult<Response<RouterMsg>> {
     deps.api.debug("Instantiating the contract🚀");
 
-    OWNER.save(deps.storage, &info.sender)?;
+    // Save the owner address
+    OWNER.save(deps.storage, &msg.owner)?;
+
+    // Save the deployer address
+    FORWARDER_DEPLOYER.save(deps.storage, &info.sender)?;
+
+    // Save the deployer address with validation
     DEPLOYER.save(deps.storage, &deps.api.addr_validate(&msg.deployer)?)?;
+
+    // Save the gas factor
     GAS_FACTOR.save(deps.storage, &110)?;
+
+    // Save the gas limit
     GAS_LIMIT.save(deps.storage, &DEFAULT_GAS_LIMIT)?;
 
+    // Save the chain type mapping
+    CHAIN_TYPE_MAPPING.save(
+        deps.storage,
+        &env.block.chain_id,
+        &ChainType::ChainTypeCosmos.get_chain_code(),
+    )?;
+
+    // Set chain type information
+    let response: Response<RouterMsg> = _set_chain_types_info(deps.branch(), msg.chain_type_info)?;
+
+    // Set the contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    Ok(Response::new().add_attribute("action", "forwarder-contract-init"))
+
+    Ok(response.add_attribute("action", "forwarder-contract-init"))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
